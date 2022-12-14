@@ -19,15 +19,18 @@ export function AuthDemoStart(): JSX.Element {
             console.log("not logged in buddy")
             return
         }
-        const idToken: string = await user?.getIdToken()
+        try {
+        const idToken: string = await user.getIdToken()
         const config = { headers: {"Authorization": "Bearer " + idToken }}
         const reply = await axios.get("http://localhost:4000/wisdom", config);
         setLastAPIReply(reply.data);
+        } catch (err) {
+            console.error(err)
+        }
     }
     async function handleSignInClicked() {
         const userCredentials = await signInWithPopup(auth, googleAuthProvider);
         const signedInUser = userCredentials.user;
-        console.log(signedInUser);
         setUser(signedInUser)
     }
     async function handleSignOutClicked() {
