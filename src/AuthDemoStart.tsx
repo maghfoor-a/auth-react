@@ -1,8 +1,11 @@
 import axios from "axios";
 import React, { useState } from "react";
+import { auth, googleAuthProvider } from "./configureFirebase"
+import { signInWithPopup, User } from "firebase/auth"; 
 
 export function AuthDemoStart(): JSX.Element {
     const [lastAPIReply, setLastAPIReply] = useState<string>("");
+    const [user, setUser] = useState<User | null>(null)
 
 
     async function handleFetchTimeClicked() {
@@ -12,17 +15,34 @@ export function AuthDemoStart(): JSX.Element {
 
     async function handleFetchWisdomClicked() {
         //This SHOULD be hard to get, eventually.
-        const reply = await axios.get("http://localhost:4000/wisdom");
+        if (!user) {
+            console.log("not logged in buddy")
+            return
+        }
+        const idToken: string = await user?.getIdToken()
+        const config = { headers: {"Authorization": "Bearer " + idToken }}
+        const reply = await axios.get("http://localhost:4000/wisdom", config);
         setLastAPIReply(reply.data);
+    }
+    async function handleSignInClicked() {
+        const userCredentials = await signInWithPopup(auth, googleAuthProvider);
+        const signedInUser = userCredentials.user;
+        console.log(signedInUser);
+        setUser(signedInUser)
+    }
+    async function handleSignOutClicked() {
+        await auth.signOut();
+        setUser(null);
     }
 
     return (
         <div>
             <h2>Auth Demo</h2>
 
-            <button onClick={() => alert("not implemented")}>Sign in</button>
-            <button onClick={() => alert("not implemented")}>Sign out</button>
-
+            <button onClick={handleSignInClicked}>Sign in</button>
+            <button onClick={handleSignOutClicked}>Sign out</button>
+            {user && <div>Hi You are signed in as: {user?.displayName}</div>}
+            {user && user.photoURL && <img src={user.photoURL} alt="User"/>}
             <hr />
             <h3>Talk to the API</h3>
             <button onClick={handleFetchTimeClicked}>Fetch Time</button>
