@@ -1,11 +1,19 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { auth, googleAuthProvider } from "./configureFirebase"
 import { signInWithPopup, User } from "firebase/auth"; 
 
 export function AuthDemoStart(): JSX.Element {
     const [lastAPIReply, setLastAPIReply] = useState<string>("");
     const [user, setUser] = useState<User | null>(null)
+
+    useEffect(() => {
+        function handleAuthStateChange(user: User | null) {
+            setUser(user);
+        }
+        const unsubscribeFn = auth.onAuthStateChanged(handleAuthStateChange);
+        return unsubscribeFn;
+    }, [])
 
 
     async function handleFetchTimeClicked() {
@@ -16,7 +24,7 @@ export function AuthDemoStart(): JSX.Element {
     async function handleFetchWisdomClicked() {
         //This SHOULD be hard to get, eventually.
         if (!user) {
-            console.log("not logged in buddy")
+            setLastAPIReply("Gotta login to see this buddy")
             return
         }
         try {
